@@ -45,6 +45,7 @@ func Resolve(req DNS) DNS {
 	if req.Header().Get("RD") != 0 {
 		resp.Header().Set("RD", 0)
 	}
+
 	resp.Header().Set("OPCODE", req.Header().Get("OPCODE"))
 	if req.Header().Get("OPCODE") != 0 {
 		resp.Header().Set("RCODE", 4)

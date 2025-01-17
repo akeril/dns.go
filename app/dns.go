@@ -20,8 +20,8 @@ func (d DNS) Header() *Header {
 }
 
 func Parse(message []byte) DNS {
-	h := ParseHeader(message[:12])
-	q := ParseQuestions(message[12:], h.QDCOUNT)
+	h := ParseHeader(message)
+	q := ParseQuestions(message, h.QDCOUNT)
 	return DNS{
 		header:    &h,
 		questions: q,

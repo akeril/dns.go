@@ -13,28 +13,44 @@ type Question struct {
 
 func ParseQuestions(message []byte, count uint16) []Question {
 	b := binary.BigEndian
+	cache := make(map[int]string)
 	questions := make([]Question, 0, count)
-	for i := 0; i < int(count); i++ {
-		p := bytes.IndexByte(message, '\x00')
+	p := 12 // offset header bytes
+	for i := 0; p < len(message) && i < int(count); i++ {
+		delim := p + bytes.IndexByte(message[p:], '\x00')
 		questions = append(questions, Question{
-			NAME:  parseLabels(message[:p]),
-			TYPE:  b.Uint16(message[p+1 : p+3]),
-			CLASS: b.Uint16(message[p+3 : p+5]),
+			NAME:  parseLabels(message, p, delim, cache),
+			TYPE:  b.Uint16(message[delim+1 : delim+3]),
+			CLASS: b.Uint16(message[delim+3 : delim+5]),
 		})
-		message = message[p+5:]
+		p = delim + 5
 	}
 	return questions
 }
 
-func parseLabels(message []byte) []string {
+func parseLabels(message []byte, l, r int, cache map[int]string) []string {
 	labels := make([]string, 0)
-	p := 0
-	for p < len(message) {
+	p := l
+	for p < r {
+		if index, ok := pointer(message[p : p+2]); ok {
+			labels = append(labels, cache[index])
+			p += 2
+			continue
+		}
 		length := int(message[p])
-		labels = append(labels, string(message[p+1:p+1+length]))
+		cache[p] = string(message[p+1 : p+1+length])
+		labels = append(labels, cache[p])
 		p += 1 + length
 	}
 	return labels
+}
+
+func pointer(prefix []byte) (int, bool) {
+	if (prefix[0]&0x80) == 0 || (prefix[0]&0x40) == 0 {
+		return 0, false
+	}
+	index := binary.BigEndian.Uint16(prefix) ^ 0xC000
+	return int(index), true
 }
 
 func (q Question) Writer() []byte {
