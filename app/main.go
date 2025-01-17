@@ -31,8 +31,10 @@ func main() {
 		request := Parse(buf[:size])
 		response := New(request.Header().ID)
 		response.Header().Set("QR")
+		response.Header().QDCOUNT = request.Header().QDCOUNT
+		response.questions = request.questions
 
-		fmt.Printf("DNS Request: %+v -> %+v, %+v\n", source, request.Header(), response.Header())
+		fmt.Printf("DNS Request: %+v -> %+v, %+v\n", source, request, response.Writer())
 
 		_, err = conn.WriteToUDP(response.Writer(), source)
 		if err != nil {
