@@ -6,9 +6,9 @@ import (
 )
 
 type Question struct {
-	LABELS []string
-	TYPE   uint16
-	CLASS  uint16
+	NAME  []string
+	TYPE  uint16
+	CLASS uint16
 }
 
 func ParseQuestions(message []byte, count uint16) []Question {
@@ -17,9 +17,9 @@ func ParseQuestions(message []byte, count uint16) []Question {
 	for i := 0; i < int(count); i++ {
 		p := bytes.IndexByte(message, '\x00')
 		questions = append(questions, Question{
-			LABELS: parseLabels(message[:p]),
-			TYPE:   b.Uint16(message[p+1 : p+3]),
-			CLASS:  b.Uint16(message[p+3 : p+5]),
+			NAME:  parseLabels(message[:p]),
+			TYPE:  b.Uint16(message[p+1 : p+3]),
+			CLASS: b.Uint16(message[p+3 : p+5]),
 		})
 		message = message[p+5:]
 	}
@@ -40,7 +40,7 @@ func parseLabels(message []byte) []string {
 func (q Question) Writer() []byte {
 	message := make([]byte, 0)
 	b := binary.BigEndian
-	for _, label := range q.LABELS {
+	for _, label := range q.NAME {
 		message = append(message, byte(len(label)))
 		message = append(message, []byte(label)...)
 	}

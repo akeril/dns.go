@@ -5,6 +5,7 @@ import "fmt"
 type DNS struct {
 	header    *Header
 	questions []Question
+	answers   []Answer
 }
 
 func New(id uint16) DNS {
@@ -32,11 +33,14 @@ func (d DNS) Writer() []byte {
 	for _, question := range d.questions {
 		message = append(message, question.Writer()...)
 	}
+	for _, answer := range d.answers {
+		message = append(message, answer.Writer()...)
+	}
 	return message
 }
 
 func (d DNS) String() string {
 	s := ""
-	s += fmt.Sprintf("{{header: %v, questions: %v}}", d.Header(), d.questions)
+	s += fmt.Sprintf("{{header: %v, questions: %v, answers: %v}}", d.Header(), d.questions, d.answers)
 	return s
 }

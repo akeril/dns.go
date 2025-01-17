@@ -20,7 +20,6 @@ func main() {
 	defer conn.Close()
 
 	buf := make([]byte, 512)
-
 	for {
 		size, source, err := conn.ReadFromUDP(buf)
 		if err != nil {
@@ -31,10 +30,16 @@ func main() {
 		request := Parse(buf[:size])
 		response := New(request.Header().ID)
 		response.Header().Set("QR")
-		response.Header().QDCOUNT = request.Header().QDCOUNT
 		response.questions = request.questions
+		response.Header().QDCOUNT = request.Header().QDCOUNT
 
-		fmt.Printf("DNS Request: %+v -> %+v, %+v\n", source, request, response.Writer())
+		for _, question := range request.questions {
+			answer, ok := Check(question)
+			if ok {
+				response.answers = append(response.answers, answer)
+				response.Header().ANCOUNT++
+			}
+		}
 
 		_, err = conn.WriteToUDP(response.Writer(), source)
 		if err != nil {
