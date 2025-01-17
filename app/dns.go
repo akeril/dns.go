@@ -8,12 +8,13 @@ type DNS struct {
 	answers   []Answer
 }
 
-func New(id uint16) DNS {
+func New() DNS {
 	return DNS{
-		header: &Header{ID: id},
+		header:    &Header{},
+		questions: make([]Question, 0),
+		answers:   make([]Answer, 0),
 	}
 }
-
 func (d DNS) Header() *Header {
 	return d.header
 }

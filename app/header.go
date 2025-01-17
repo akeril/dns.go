@@ -4,10 +4,13 @@ import "encoding/binary"
 
 const (
 	QR_BIT = 0b1000000000000000
+	OP_BIT = 0b0111100000000000
 	AA_BIT = 0b0000010000000000
 	TC_BIT = 0b0000001000000000
 	RD_BIT = 0b0000000100000000
 	RA_BIT = 0b0000000010000000
+	RZ_BIT = 0b0000000001110000
+	RC_BIT = 0b0000000000001111
 )
 
 type Header struct {
@@ -19,27 +22,36 @@ type Header struct {
 	ARCOUNT uint16
 }
 
-func (h Header) Get(flag string) bool {
+func (h Header) Get(flag string) uint16 {
 	switch flag {
 	case "QR":
-		return h.FLAGS&QR_BIT != 0
+		return h.FLAGS & QR_BIT
+	case "OPCODE":
+		return h.FLAGS & OP_BIT
 	case "AA":
-		return h.FLAGS&AA_BIT != 0
+		return h.FLAGS & AA_BIT
 	case "TC":
-		return h.FLAGS&TC_BIT != 0
+		return h.FLAGS & TC_BIT
 	case "RD":
-		return h.FLAGS&RD_BIT != 0
+		return h.FLAGS & RD_BIT
 	case "RA":
-		return h.FLAGS&RA_BIT != 0
+		return h.FLAGS & RA_BIT
+	case "RESERVED":
+		return h.FLAGS & RZ_BIT
+	case "RCODE":
+		return h.FLAGS & RC_BIT
 	default:
-		return false
+		panic("Unknown Flag")
 	}
 }
 
-func (h *Header) Set(flag string) {
+// value bits are only considered for "OPCODE", "RESERVED", "RCODE"
+func (h *Header) Set(flag string, value uint16) {
 	switch flag {
 	case "QR":
 		h.FLAGS |= QR_BIT
+	case "OPCODE":
+		h.FLAGS |= (OP_BIT & value)
 	case "AA":
 		h.FLAGS |= AA_BIT
 	case "TC":
@@ -48,6 +60,12 @@ func (h *Header) Set(flag string) {
 		h.FLAGS |= RD_BIT
 	case "RA":
 		h.FLAGS |= RA_BIT
+	case "RESERVED":
+		h.FLAGS |= (RZ_BIT & value)
+	case "RCODE":
+		h.FLAGS |= (RC_BIT & value)
+	default:
+		panic("Unknown Flag")
 	}
 }
 
