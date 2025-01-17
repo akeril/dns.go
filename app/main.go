@@ -28,13 +28,13 @@ func main() {
 			break
 		}
 
-		data := string(buf[:size])
-		fmt.Printf("Received %d bytes from %s: %s\n", size, source, data)
+		request := Parse(buf[:size])
+		response := New(request.Header().ID)
+		response.Header().Set("QR")
 
-		// Create an empty response
-		response := []byte{}
+		fmt.Printf("DNS Request: %+v -> %+v, %+v\n", source, request.Header(), response.Header())
 
-		_, err = conn.WriteToUDP(response, source)
+		_, err = conn.WriteToUDP(response.Writer(), source)
 		if err != nil {
 			fmt.Println("Failed to send response:", err)
 		}
