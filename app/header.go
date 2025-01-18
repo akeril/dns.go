@@ -69,9 +69,9 @@ func (h *Header) Set(flag string, value uint16) {
 	}
 }
 
-func ParseHeader(message []byte) Header {
+func ParseHeader(message []byte) (int, Header) {
 	b := binary.BigEndian
-	return Header{
+	return 12, Header{
 		ID:      b.Uint16(message[:2]),
 		FLAGS:   b.Uint16(message[2:4]),
 		QDCOUNT: b.Uint16(message[4:6]),

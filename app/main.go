@@ -1,11 +1,15 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net"
 )
 
 func main() {
+	resolveIP := flag.String("resolver", "", "DNS Resolution Server")
+	flag.Parse()
+
 	addr, err := net.ResolveUDPAddr("udp", "127.0.0.1:2053")
 	if err != nil {
 		fmt.Println("Failed to resolve UDP address:", err)
@@ -28,7 +32,7 @@ func main() {
 		}
 
 		request := Parse(buf[:size])
-		response := Resolve(request)
+		response := Resolve(*resolveIP, request)
 		_, err = conn.WriteToUDP(response.Writer(), source)
 		if err != nil {
 			fmt.Println("Failed to send response:", err)
@@ -36,7 +40,7 @@ func main() {
 	}
 }
 
-func Resolve(req DNS) DNS {
+func Resolve(IP string, req DNS) DNS {
 	resp := New()
 
 	// set Headers
@@ -55,10 +59,12 @@ func Resolve(req DNS) DNS {
 	for _, question := range req.questions {
 		resp.questions = append(resp.questions, question)
 		resp.Header().QDCOUNT++
-		answer, ok := Check(question)
-		if ok {
-			resp.answers = append(resp.answers, answer)
+		fwdResp, err := Check(IP, req, question)
+		if err == nil {
+			resp.answers = append(resp.answers, fwdResp.answers...)
 			resp.Header().ANCOUNT++
+		} else {
+			fmt.Println(err)
 		}
 	}
 

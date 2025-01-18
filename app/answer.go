@@ -13,15 +13,24 @@ type Answer struct {
 	RDATA    []byte
 }
 
-func Check(q Question) (Answer, bool) {
-	return Answer{
-		NAME:     q.NAME,
-		TYPE:     q.TYPE,
-		CLASS:    q.CLASS,
-		TTL:      uint32(3600),
-		RDLENGTH: uint16(4),
-		RDATA:    []byte{'\x08', '\x08', '\x08', '\x08'},
-	}, true
+func ParseAnswers(message []byte, start int, count uint16) (int, []Answer) {
+	b := binary.BigEndian
+	answers := make([]Answer, 0)
+	p := start
+	for i := 0; p < len(message) && i < int(count); i++ {
+		delim, labels := parseLabels(message, p)
+		length := b.Uint16(message[delim+8 : delim+10])
+		answers = append(answers, Answer{
+			NAME:     labels,
+			TYPE:     b.Uint16(message[delim : delim+2]),
+			CLASS:    b.Uint16(message[delim+2 : delim+4]),
+			TTL:      b.Uint32(message[delim+4 : delim+8]),
+			RDLENGTH: length,
+			RDATA:    message[delim+10 : delim+10+int(length)],
+		})
+		p = delim + 10 + int(length)
+	}
+	return p, answers
 }
 
 func (a Answer) Writer() []byte {
