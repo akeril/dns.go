@@ -33,6 +33,7 @@ func main() {
 
 		request := Parse(buf[:size])
 		response := Resolve(*resolveIP, request)
+
 		_, err = conn.WriteToUDP(response.Writer(), source)
 		if err != nil {
 			fmt.Println("Failed to send response:", err)
@@ -43,28 +44,24 @@ func main() {
 func Resolve(IP string, req DNS) DNS {
 	resp := New()
 
-	// set Headers
 	resp.Header().ID = req.Header().ID
 	resp.Header().Set("QR", QR_BIT)
 	if req.Header().Get("RD") != 0 {
-		resp.Header().Set("RD", 0)
+		resp.Header().Set("RD", req.Header().Get("RD"))
 	}
-
 	resp.Header().Set("OPCODE", req.Header().Get("OPCODE"))
 	if req.Header().Get("OPCODE") != 0 {
 		resp.Header().Set("RCODE", 4)
 	}
+	resp.Header().QDCOUNT = req.Header().QDCOUNT
+	resp.questions = req.questions
 
-	// resolve DNS queries
 	for _, question := range req.questions {
-		resp.questions = append(resp.questions, question)
-		resp.Header().QDCOUNT++
-		fwdResp, err := Check(IP, req, question)
+		// fwdResp, err := Check(IP, req, question)
+		answer, err := Check(IP, question)
 		if err == nil {
-			resp.answers = append(resp.answers, fwdResp.answers...)
+			resp.answers = append(resp.answers, answer)
 			resp.Header().ANCOUNT++
-		} else {
-			fmt.Println(err)
 		}
 	}
 

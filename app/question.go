@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/binary"
 )
 
@@ -16,7 +15,6 @@ func ParseQuestions(message []byte, start int, count uint16) (int, []Question) {
 	questions := make([]Question, 0, count)
 	p := start
 	for i := 0; p < len(message) && i < int(count); i++ {
-		delim := p + bytes.IndexByte(message[p:], '\x00')
 		delim, labels := parseLabels(message, p)
 		questions = append(questions, Question{
 			NAME:  labels,
