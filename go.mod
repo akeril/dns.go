@@ -6,6 +6,6 @@
 //
 // DON'T EDIT THIS!
 
-module github.com/codecrafters-io/dns-server-starter-go
+module github.com/akeril/dns.go
 
 go 1.22
